@@ -6,6 +6,8 @@ import helper_utils
 
 # region Functions
 def parse_bot_commands(slack_events):
+    # Check if the events are of type 'message' and that it's not from a bot,
+    # since bots have subtypes. This should probably be reworked.
     for event in slack_events:
         if event['type'] == 'message' and "subtype" not in event:
             print(event)
@@ -14,8 +16,7 @@ def parse_bot_commands(slack_events):
 
 
 def handle_message(message, channel):
-    response = None
-    outputdict = {}
+    response, outputdict = '', {}
     message = str.lower(message)
 
     for word in keywords:
@@ -23,11 +24,9 @@ def handle_message(message, channel):
             outputdict[word] = keywords[word]
 
     if outputdict:
-        response = ''
         for word in outputdict.keys():
             response += '{} means: {} \r\n'.format(word, keywords[word])
 
-    # Sends the response back to the channel
     if response:
         print(response)
         slack_client.api_call(
@@ -43,11 +42,11 @@ def handle_message(message, channel):
 # region Script Execution
 
 # Constants
-RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
+RTM_READ_DELAY = 1  # read from the RTM API every second
 
 # variables
 slack_client = SlackClient(config('TOKEN'))
-keywords = helper_utils.load_json_to_dict('keywords.json')
+keywords = helper_utils.load_json_to_dict('keywords.json')  # dictionary of known '1337' keywords
 bot_id = None  # bot's user ID in Slack: value is assigned after the bot starts up
 
 if __name__ == "__main__":
